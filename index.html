@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<!-- 
+Declara que o documento é HTML5.
+Isso diz ao navegador como interpretar o arquivo.
+-->
+
+<html>
+<head>
+    <meta charset="UTF-8" />
+    <!-- 
+    Define a codificação como UTF-8.
+    Permite acentos corretamente (São Paulo, por exemplo).
+    -->
+
+    <title>Monitor de Risco por Chuva</title>
+    <!-- 
+    Título da aba do navegador.
+    -->
+</head>
+
+<body>
+
+    <!-- Título visível na página -->
+    <h1>Monitor de Risco por Chuva</h1>
+
+    <!-- 
+    Campo onde o usuário digita a cidade.
+    id="cidade" permite que o JavaScript encontre esse elemento depois.
+    -->
+    <input 
+        type="text" 
+        id="cidade" 
+        placeholder="Digite o nome da cidade"
+    />
+
+    <!-- 
+    Botão que chama a função buscar()
+    quando for clicado.
+    -->
+    <button onclick="buscar()">
+        Buscar Risco
+    </button>
+
+    <!-- 
+    Área onde vamos mostrar o resultado.
+    <pre> mantém a formatação do JSON.
+    -->
+    <pre id="saida"></pre>
+
+    <!-- ===============================
+         BLOCO JAVASCRIPT
+         =============================== -->
+    <script>
+
+        // Função chamada quando o botão é clicado
+        async function buscar() {
+
+            // 1️ Pega o valor digitado no campo
+            const cidade = document.getElementById("cidade").value;
+
+            // Se o usuário não digitou nada, interrompe
+            if (!cidade) {
+                alert("Digite uma cidade!");
+                return;
+            }
+
+            // 2️ Monta a URL da API backend
+            // encodeURIComponent evita erro com espaços e acentos
+            const url = `http://127.0.0.1:8000/risco?cidade=${encodeURIComponent(cidade)}`;
+
+            try {
+
+                // 3️ Faz requisição para o backend
+                const resposta = await fetch(url);
+
+                // 4️ Converte resposta para JSON
+                const dados = await resposta.json();
+
+                // 5️ Mostra resultado na tela formatado
+                // 5️ Define cor baseada no nível de risco
+let cor;
+
+if (dados.nivel_risco === "ALTO") {
+    cor = "red";
+} else if (dados.nivel_risco === "MÉDIO") {
+    cor = "orange";
+} else {
+    cor = "green";
+}
+
+// 6️ Monta exibição amigável
+document.getElementById("saida").innerHTML = `
+    <h2>Resultado da Análise</h2>
+
+    <p><strong>Cidade pesquisada:</strong> 
+        ${dados.cidade_pesquisada}
+    </p>
+
+    <p><strong>Local identificado:</strong> 
+        ${dados.local_encontrado}
+    </p>
+
+    <p><strong>Chuva atual:</strong> 
+        ${dados.precipitacao_mm} mm
+    </p>
+
+    <p><strong>Nível de risco:</strong> 
+        <span style="color:${cor}; font-weight:bold;">
+            ${dados.nivel_risco}
+        </span>
+    </p>
+`;
+            } catch (erro) {
+
+                // Se algo der errado (servidor fora, etc)
+                document.getElementById("saida").textContent =
+                    "Erro ao buscar dados.";
+
+                console.error("Erro:", erro);
+            }
+        }
+
+    </script>
+
+</body>
+</html>
